@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Chat</title>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/home.css') }}">
+    </head>
+    <body>
+        <h1>Welcome {{ user }}!</h1>
+
+        <!-- Chat Window -->
+        <h4>Chats</h4>
+        <ul id="message-window">
+            {% for chat in latest_chats %}
+                <li>({chat.time_sent}) {{chat.user}}: {{chat.message}}</li>
+            {% endfor %}
+        </ul>
+
+        <form id="chat-form">
+            <input type="text" id="new-message" autocomplete="off">
+            <button type="submit">Send</button>
+        </form>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
+        <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+    </body>
+</html>
