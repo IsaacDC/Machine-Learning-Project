@@ -8,10 +8,9 @@
         <h1>Welcome {{ user }}!</h1>
 
         <!-- Chat Window -->
-        <h4>Chats</h4>
         <ul id="message-window">
             {% for chat in latest_chats %}
-                <li>({chat.time_sent}) {{chat.user}}: {{chat.message}}</li>
+                <li>({{ chat.time_sent }}) {{ chat.user }}: {{ chat.message }}</li>
             {% endfor %}
         </ul>
 
