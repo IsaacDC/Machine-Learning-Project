@@ -6,15 +6,15 @@
     </head>
     <body>
         <h4><u>Chat History</u></h4>
-        <ul>
-            <li>Id</li>
-            <li>Message</li>
-        </ul>
-        <ul>
+        <table class="chat-history">
             {% for chat in chat_history %}
-            <li>{{ chat.id }}</li>
-            <li>{{ chat.message }}</li>
+            <tr>
+                <td>{{ chat.id }}</td>
+                <td>{{ chat.user }}</td>
+                <td>{{ chat.time_sent }}</td>
+                <td>{{ chat.message }}</td>
+            </tr>
             {% endfor %}
-        </ul>
+        </table>
     </body>
 </html>
