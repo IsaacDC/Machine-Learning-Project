@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.on('message', (data) => {
         const messageWindow = document.getElementById('message-window');
         const li = document.createElement('li');
-        li.textContent = '(' + data.time_sent + ') ' + data.user + ': ' + data.message;
+        li.innerHTML = '(' + data.time_sent + ') ' + '<strong>' + data.user + '</strong>' + ': ' + data.message;
         messageWindow.appendChild(li);
 
         // Limits message history to 25 messages
