@@ -1,26 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chat</title>
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="{{ url_for('static', filename='css/chatHistory.css') }}"
-    />
-  </head>
-  <body>
-    <h4><u>Chat History</u></h4>
-    <ul>
-      <li>Id</li>
-      <li>Message</li>
-    </ul>
-    <ul>
-      {% for chat in chat_history %}
-      <li>{{ chat.id }}</li>
-      <li>{{ chat.message }}</li>
-      {% endfor %}
-    </ul>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat History</title>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/chatHistory.css') }}">
+</head>
+<body>
+  <header>
+    <h1>Chat History</h1>
+  </header>
+
+  <main>
+    <section>
+      <h2>Chat Details</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for chat in chat_history %}
+          <tr>
+            <td>{{ chat.id }}</td>
+            <td>{{ chat.message }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2024 Chat App</p>
+  </footer>
+</body>
 </html>
