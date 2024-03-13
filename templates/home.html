@@ -1,26 +1,41 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Chat</title>
-        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/home.css') }}">
-    </head>
-    <body>
-        <h1>Welcome {{ user }}!</h1>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat App</title>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/home.css') }}">
+</head>
+<body>
+  <header>
+    <h1>Welcome <span id="username">{{ user }}</span>!</h1>
+  </header>
 
-        <!-- Chat Window -->
-        <h4>Chats</h4>
-        <ul id="message-window">
-            {% for chat in latest_chats %}
-                <li>({chat.time_sent}) {{chat.user}}: {{chat.message}}</li>
-            {% endfor %}
-        </ul>
+  <main>
+    <!-- Chat Window -->
+    <section class="chat_window">
+      <h2>Chats</h2>
+      <ul id="message-window" aria-live="polite" aria-atomic="true">
+        {% for chat in latest_chats %}
+        <li>
+          <time datetime="{{ chat.time_sent }}">{{ chat.time_sent }}</time>
+          <strong>{{ chat.user }}:</strong> {{ chat.message }}
+        </li>
+        {% endfor %}
+      </ul>
 
-        <form id="chat-form">
-            <input type="text" id="new-message" autocomplete="off">
-            <button type="submit">Send</button>
-        </form>
+      <form id="chat-form" aria-labelledby="new-message-label">
+        <label for="new-message" id="new-message-label">Message:</label>
+        <input type="text" id="new-message" autocomplete="off" aria-required="true" aria-describedby="new-message-error">
+        <button type="submit">Send</button>
+        <span id="new-message-error" class="error" aria-live="assertive"></span>
+      </form>
+    </section>
+  </main>
 
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
-        <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
-    </body>
+  <footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+  </footer>
+</body>
 </html>
