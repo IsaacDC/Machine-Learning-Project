@@ -1,8 +1,10 @@
-from flask import Flask, render_template, session
+from flask import Flask, render_template, session, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 from current_time import get_current_time
 import random
+
+from testTranslater import translate_text
 
 # Assigns Flask application name
 app = Flask(__name__)
@@ -80,6 +82,15 @@ def chat_history():
     # Load 'chatHistory,html' with access to chat_history
     return render_template("chatHistory.html", chat_history=chat_history)
 
+@app.route('/translate', method=['POST'])
+def translate():
+    data = request.get_json()
+    text = data.get('text')
+    target_lang = data.get('targetLang')
+
+    translated_text = translate_text(text, target_lang)
+
+    return jsonify({'translation' : translate_text})
 
 # Runs a local server with WebSocket support
 if __name__ == '__main__':

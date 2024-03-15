@@ -27,8 +27,16 @@
       <form id="chat-form" aria-labelledby="new-message-label">
         <label for="new-message" id="new-message-label">Message:</label>
         <input type="text" id="new-message" autocomplete="off" aria-required="true" aria-describedby="new-message-error">
-        <button type="submit">Send</button>
+        <button type="submit" onclick="sendmessage()">Send</button>
         <span id="new-message-error" class="error" aria-live="assertive"></span>
+
+        <label for="target-language">Translate to:</label>
+        <select id="target-language">
+          <option value="en"></option>
+          <option value="ja"></option>
+          <option value="zh"></option>
+        </select>
+        <button type="button" onclick="sendMessage()">Translate and Send</button>
       </form>
     </section>
   </main>
@@ -36,6 +44,7 @@
   <footer>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
     <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+    <script src="..\static\js\testTranslator.js"></script>
   </footer>
 </body>
 </html>
