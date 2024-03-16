@@ -4,7 +4,7 @@ from flask_socketio import SocketIO
 from current_time import get_current_time
 import random
 
-from testTranslater import translate_text
+import testTranslater
 
 # Assigns Flask application name
 app = Flask(__name__)
@@ -82,15 +82,25 @@ def chat_history():
     # Load 'chatHistory,html' with access to chat_history
     return render_template("chatHistory.html", chat_history=chat_history)
 
-@app.route('/translate', method=['POST'])
+@app.route('/translate', methods=['POST'])
 def translate():
-    data = request.get_json()
-    text = data.get('text')
-    target_lang = data.get('targetLang')
+    input_text = request.form['input_text']
+    output_lang = request.form['target_lang']
 
-    translated_text = translate_text(text, target_lang)
+    input_ids = testTranslater.encode_input_str(
+        text=input_text,
+        target_lang=output_lang,
+        tokenizer=testTranslater.tokenizer,
+        seq_len=testTranslater.model.config.max_length,
+        lang_token_map=testTranslater.LANG_TOKEN_MAPPING
+    )
+    input_ids = input_ids.unsqueeze(0).cuda()
 
-    return jsonify({'translation' : translate_text})
+    output_tokens = testTranslater.model.generate(input_ids, num_beams=20, max_new_tokens = 20, length_penalty=0.2)
+
+    translated_text = testTranslater.tokenizer.decode(output_tokens[0], skip_special_tokens=True)
+
+    return jsonify({'translation': translated_text})
 
 # Runs a local server with WebSocket support
 if __name__ == '__main__':

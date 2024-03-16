@@ -1,50 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat App</title>
-  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/home.css') }}">
-</head>
-<body>
-  <header>
-    <h1>Welcome <span id="username">{{ user }}</span>!</h1>
-  </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat App</title>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static', filename='css/home.css') }}"
+    />
+  </head>
+  <body>
+    <header>
+      <h1>Welcome <span id="username">{{ user }}</span>!</h1>
+    </header>
 
-  <main>
-    <!-- Chat Window -->
-    <section class="chat_window">
-      <h2>Chats</h2>
-      <ul id="message-window" aria-live="polite" aria-atomic="true">
-        {% for chat in latest_chats %}
-        <li>
-          <time datetime="{{ chat.time_sent }}">({{ chat.time_sent }})</time>
-          <strong>{{ chat.user }}:</strong> {{ chat.message }}
-        </li>
-        {% endfor %}
-      </ul>
+    <main>
+      <!-- Chat Window -->
+      <section class="chat_window">
+        <h2>Chats</h2>
+        <ul id="message-window" aria-live="polite" aria-atomic="true">
+          {% for chat in latest_chats %}
+          <li>
+            <time datetime="{{ chat.time_sent }}">({{ chat.time_sent }})</time>
+            <strong>{{ chat.user }}:</strong> {{ chat.message }}
+          </li>
+          {% endfor %}
+        </ul>
 
-      <form id="chat-form" aria-labelledby="new-message-label">
-        <label for="new-message" id="new-message-label">Message:</label>
-        <input type="text" id="new-message" autocomplete="off" aria-required="true" aria-describedby="new-message-error">
-        <button type="submit" onclick="sendmessage()">Send</button>
-        <span id="new-message-error" class="error" aria-live="assertive"></span>
+        <form
+          action="/translate"
+          method="post"
+          id="chat-form"
+          aria-labelledby="new-message-label"
+        >
+          <label for="new-message" id="new-message-label">Message:</label>
+          <input
+            type="text"
+            id="new-message"
+            autocomplete="off"
+            aria-required="true"
+            aria-describedby="new-message-error"
+          />
+          <button type="submit" onclick="sendmessage()">Send</button>
+          <span
+            id="new-message-error"
+            class="error"
+            aria-live="assertive"
+          ></span>
 
-        <label for="target-language">Translate to:</label>
-        <select id="target-language">
-          <option value="en"></option>
-          <option value="ja"></option>
-          <option value="zh"></option>
-        </select>
-        <button type="button" onclick="sendMessage()">Translate and Send</button>
-      </form>
-    </section>
-  </main>
+          <label for="target-language">Translate to:</label>
+          <select id="target-language">
+            <option value="en">en</option>
+            <option value="ja">ja</option>
+            <option value="zh">zh</option>
+          </select>
+          <button type="submit" onclick="sendMessage()">
+            Translate and Send
+          </button>
+        </form>
 
-  <footer>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
-    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
-    <script src="..\static\js\testTranslator.js"></script>
-  </footer>
-</body>
+        <div id="translation-result"></div>
+      </section>
+    </main>
+
+    <footer>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
+      <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+      <script src="{{ url_for('static', filename='js/testTranslator.js') }}"></script>
+    </footer>
+  </body>
 </html>
