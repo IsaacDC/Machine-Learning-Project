@@ -3,8 +3,19 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 from current_time import get_current_time
 import random
+import testTranslator
+from testTranslator import model
+import os
+import torch
 
-import testTranslater
+model_path = "model_checkpoints\model.pt"
+# Check if the model checkpoint exists
+if os.path.exists(model_path):
+    # Load the trained model from the checkpoint
+    model.load_state_dict(torch.load(model_path))
+    model.eval()  # Set the model to evaluation mode
+else:
+    print("Model checkpoint not found. Please train the model first.")
 
 # Assigns Flask application name
 app = Flask(__name__)
@@ -82,23 +93,24 @@ def chat_history():
     # Load 'chatHistory,html' with access to chat_history
     return render_template("chatHistory.html", chat_history=chat_history)
 
+
 @app.route('/translate', methods=['POST'])
 def translate():
     input_text = request.form['input_text']
     output_lang = request.form['target_lang']
 
-    input_ids = testTranslater.encode_input_str(
+    input_ids = testTranslator.encode_input_str(
         text=input_text,
         target_lang=output_lang,
-        tokenizer=testTranslater.tokenizer,
-        seq_len=testTranslater.model.config.max_length,
-        lang_token_map=testTranslater.LANG_TOKEN_MAPPING
+        tokenizer= testTranslator.tokenizer,
+        seq_len=model.config.max_length,
+        lang_token_map= testTranslator.LANG_TOKEN_MAPPING
     )
     input_ids = input_ids.unsqueeze(0).cuda()
 
-    output_tokens = testTranslater.model.generate(input_ids, num_beams=20, max_new_tokens = 20, length_penalty=0.2)
+    output_tokens =model.generate(input_ids, num_beams=20, max_new_tokens = 20, length_penalty=0.2)
 
-    translated_text = testTranslater.tokenizer.decode(output_tokens[0], skip_special_tokens=True)
+    translated_text = testTranslator.tokenizer.decode(output_tokens[0], skip_special_tokens=True)
 
     return jsonify({'translation': translated_text})
 

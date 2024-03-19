@@ -1,36 +1,38 @@
-function sendMessage() {
-  var message = document.getElementById('new-message').value;
-  var targetLang = document.getElementById('target-language').value;
+function translateAndSend() {
+  const inputText = document.getElementById('new-message').value.trim();
+  const targetLang = document.getElementById('target-language').value;
 
-  // Send AJAX request to Flask for translation
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', '/translate', true);
-  xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-  xhr.onreadystatechange = function () {
-      if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-          var response = JSON.parse(xhr.responseText);
-          var translatedMessage = response.translation;
-          sendTranslatedMessage(translatedMessage);
+  if (inputText) {
+    // Send AJAX request to the /translate route
+    $.ajax({
+      type: 'POST',
+      url: '/translate',
+      data: {
+        input_text: inputText,
+        target_lang: targetLang
+      },
+      success: function(response) {
+        const translatedText = response.translation;
+        const translationOutput = document.getElementById('translation-output');
+        translationOutput.textContent = `Translated: ${translatedText}`;
+
+        // Send the translated message over the WebSocket
+        socket.emit('message', translatedText);
+        document.getElementById('new-message').value = '';
+      },
+      error: function() {
+        alert('An error occurred during translation.');
       }
-  };
-  xhr.send('input_text=' + encodeURIComponent(message) + '&target_lang=' + targetLang);
+    });
+  } else {
+    const errorSpan = document.getElementById('new-message-error');
+    errorSpan.textContent = 'Please enter a message.';
+  }
 }
 
-function sendTranslatedMessage(translatedMessage) {
-  // Emit WebSocket event to send translated message
-  socketio.emit('message', translatedMessage);
-}
-
-document.getElementById('translation-form').addEventListener('submit', function(event) {
+// Handle form submission for translation
+const chatForm = document.getElementById('chat-form');
+chatForm.addEventListener('submit', (event) => {
   event.preventDefault();
-
-  var formData = new FormData(this);
-  fetch('/translate', {
-    method: 'POST',
-    body: formData
-  })
-  .then(response => response.json())
-  .then(data => {
-    document.getElementById('translation-result').innerText = data.translation;
-  });
+  translateAndSend();
 });
