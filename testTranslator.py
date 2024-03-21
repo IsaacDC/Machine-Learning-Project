@@ -1,6 +1,5 @@
 from datasets import load_dataset
 import numpy as np
-import seaborn as sns
 import torch
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from transformers import get_linear_schedule_with_warmup
@@ -8,30 +7,19 @@ from tqdm.notebook import tqdm
 import os
 
 model_repo = "google/mt5-small"
-# limits to 20 tokens for Now
 max_new_tokens = 20
-model_path = "model_checkpoints\model.pt"
-
-# Check if the model checkpoint exists
-if os.path.exists(model_path):
-    # Load the trained model from the checkpoint
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_repo)
-    model.load_state_dict(torch.load(model_path))
-    model = model.eval()  # Set the model to evaluation mode
-else:
-    # Initialize the model if the checkpoint doesn't exist
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_repo)
-    model = model.cuda()  # If you want GPU enabled
-
+model_path = r"model_checkpoints\model.pt"
+model = AutoModelForSeq2SeqLM.from_pretrained(model_repo)
 
 tokenizer = AutoTokenizer.from_pretrained(model_repo)
+
 # Prepare Dataset
 dataset = load_dataset("alt")
 
 train_dataset = dataset["train"]
 test_dataset = dataset["test"]
 
-LANG_TOKEN_MAPPING = {"en": "<en>", "ja": "<jp>", "zh": "<zh>"}
+LANG_TOKEN_MAPPING = {"en": "<en>", "ja": "<jp>"}
 
 
 def encode_input_str(
@@ -98,11 +86,11 @@ def transform_batch(batch, lang_token_map, tokenizer):
             continue
 
         input_ids, target_ids = formatted_data
-        inputs.append(input_ids.unsqueeze(0).cuda())
-        targets.append(target_ids.unsqueeze(0).cuda())
+        inputs.append(input_ids.unsqueeze(0))
+        targets.append(target_ids.unsqueeze(0))
 
-    batch_input_ids = torch.cat(inputs).cuda()
-    batch_target_ids = torch.cat(targets).cuda()
+    batch_input_ids = torch.cat(inputs)
+    batch_target_ids = torch.cat(targets)
 
     return batch_input_ids, batch_target_ids
 
@@ -113,6 +101,7 @@ def get_data_generator(dataset, lang_token_map, tokenizer, batch_size=32):
         raw_batch = dataset[i : i + batch_size]
         yield transform_batch(raw_batch, lang_token_map, tokenizer)
 
+model.load_state_dict(torch.load(model_path))
 
 n_epochs = 5
 batch_size = 16
@@ -144,48 +133,68 @@ def eval_model(model, gdataset, max_iters=8):
 
     return np.mean(eval_losses)
 
+#Training
+def load_or_train_model(model_repo, model_path):
+    if os.path.exists(model_path):
+        model = AutoModelForSeq2SeqLM.from_pretrained(model_repo)
+        model.load_state_dict(torch.load(model_path))
+        model = model.eval()
+    else:
+        for epoch_idx in range(n_epochs):
+            # Randomize data order
+            data_generator = get_data_generator(
+                train_dataset, LANG_TOKEN_MAPPING, tokenizer, batch_size
+            )
 
-def train_model(n_epochs, batch_size, print_freq, checkpoint_freq, lr, model_path):
-    for epoch_idx in range(n_epochs):
-        # Randomize Data Order
-        data_generator = get_data_generator(
-            train_dataset, LANG_TOKEN_MAPPING, tokenizer, batch_size
-        )
+            for batch_idx, (input_batch, label_batch) in tqdm(
+                enumerate(data_generator), total=n_batches
+            ):
+                optimizer.zero_grad()
 
-        for batch_idx, (input_batch, label_batch) in tqdm(
-            enumerate(data_generator), total=n_batches
-        ):
-            optimizer.zero_grad()
-            # Forward pass
-            model_out = model.forward(input_ids=input_batch, labels=label_batch)
+                # Forward pass
+                model_out = model.forward(input_ids=input_batch, labels=label_batch)
 
-            # Calculate loss and update weights
-            loss = model_out.loss
-            losses.append(loss.item())
-            loss.backward()
-            optimizer.step()
-            scheduler.step()
+                # Calculate loss and update weights
+                loss = model_out.loss
+                losses.append(loss.item())
+                loss.backward()
+                optimizer.step()
+                scheduler.step()
 
-            # Print training update info
-            if (batch_idx + 1) % print_freq == 0:
-                avg_loss = np.mean(losses[-print_freq:])
-                print(
-                    "Epoch: {} | Step: {} | Avg. loss: {:.3f} | lr: {}".format(
-                        epoch_idx + 1,
-                        batch_idx + 1,
-                        avg_loss,
-                        scheduler.get_last_lr()[0],
+                # Print training update info
+                if (batch_idx + 1) % print_freq == 0:
+                    avg_loss = np.mean(losses[-print_freq:])
+                    print(
+                        "Epoch: {} | Step: {} | Avg. loss: {:.3f} | lr: {}".format(
+                            epoch_idx + 1, batch_idx + 1, avg_loss, scheduler.get_last_lr()[0]
+                        )
                     )
-                )
 
-            if (batch_idx + 1) % checkpoint_freq == 0:
-                test_loss = eval_model(model, test_dataset)
-                print("Saving model with test loss of {:.3f}".format(test_loss))
-                torch.save(model.state_dict(), model_path)
+                if (batch_idx + 1) % checkpoint_freq == 0:
+                    test_loss = eval_model(model, test_dataset)
+                    print("Saving model with test loss of {:.3f}".format(test_loss))
+                    torch.save(model.state_dict(), model_path)
+
+        torch.save(model.state_dict(), model_path)
+
+    return model
 
 
-torch.save(model.state_dict(), model_path)
+test_sentence = 'Hello my name is Goku Takoshima I am japanese'
+print('Raw input text:', test_sentence)
 
+input_ids = encode_input_str(
+    text = test_sentence,
+    target_lang = 'ja',
+    tokenizer = tokenizer,
+    seq_len = model.config.max_length,
+    lang_token_map = LANG_TOKEN_MAPPING)
+input_ids = input_ids.unsqueeze(0)
 
-if __name__ == "__main__":
-    train_model(n_epochs, batch_size, print_freq, checkpoint_freq, lr, model_path)
+print('Truncated input text:', tokenizer.convert_tokens_to_string(
+    tokenizer.convert_ids_to_tokens(input_ids[0])))
+
+output_tokens = model.generate(input_ids, num_beams=10, num_return_sequences=3)
+# print(output_tokens)
+for token_set in output_tokens:
+  print(tokenizer.decode(token_set, skip_special_tokens=True))

@@ -27,47 +27,33 @@
           </li>
           {% endfor %}
         </ul>
-
-        <form
-          action="/translate"
-          method="post"
-          id="chat-form"
-          aria-labelledby="new-message-label"
-        >
-          <label for="new-message" id="new-message-label">Message:</label>
-          <input
-            type="text"
-            id="new-message"
-            autocomplete="off"
-            aria-required="true"
-            aria-describedby="new-message-error"
-          />
-          <button type="submit" onclick="sendmessage()">Send</button>
-          <span
-            id="new-message-error"
-            class="error"
-            aria-live="assertive"
-          ></span>
-
-          <label for="target-language">Translate to:</label>
-          <select id="target-language">
-            <option value="en">en</option>
-            <option value="ja">ja</option>
-            <option value="zh">zh</option>
-          </select>
-          <button type="submit" onclick="sendMessage()">
-            Translate and Send
-          </button>
-        </form>
-
-        <div id="translation-output"></div>
       </section>
+
+      <!--New Message and Send-->
+      <form method="post" id="chat-form" aria-labelledby="new-message-label">
+        <label for="new-message" id="new-message-label">Message:</label>
+        <input
+          type="text"
+          id="new-message"
+          placeholder="Type your message..."
+          autocomplete="off"
+          aria-required="true"
+          aria-describedby="new-message-error"
+        />
+        <label for="target-lang">Translate to:</label>
+        <select id="target-lang" name="target-lang">
+          <option value="en">English</option>
+          <option value="ja">Japanese</option>
+        </select>
+        <button type="submit">Send</button>
+        <span id="new-message-error" class="error" aria-live="assertive"></span>
+      </form>
     </main>
 
     <footer>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
       <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
-      <script src="{{ url_for('static', filename='js/testTranslator.js') }}"></script>
+      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     </footer>
   </body>
 </html>
