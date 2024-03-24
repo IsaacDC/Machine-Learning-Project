@@ -2,7 +2,8 @@ from flask import Flask, render_template, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 from current_time import get_current_time
-import random
+from translator import translate_sentence
+import random, json
 
 # Assigns Flask application name
 app = Flask(__name__)
@@ -25,8 +26,11 @@ class Chats(db.Model):
     message = db.Column(db.String(250), nullable=False)
     user = db.Column(db.String(25), nullable=False)
     time_sent = db.Column(db.String(7), nullable=False)
+    translate = db.Column(db.Boolean(), nullable=False)
+    origin_language = db.Column(db.String(25), nullable=False)
+    target_language = db.Column(db.String(25), nullable=False)
 
-    # Required, but not necessary.
+    # Required, but not necessary to use.
     # Used for debugging via printing database attributes
     def __repr__(self):
         return ""
@@ -44,16 +48,29 @@ def check_connection():
 
 # Websocket functionality when it receives a message
 @socketio.on('message')
-def handle_message(message):
+def handle_message(json_message_data):
+    message_data = json.loads(json_message_data)
+    message = message_data['message']
+    origin_language = message_data['originLanguage']
+    target_language = message_data['targetLanguage']
+    translate = message_data['translate']
+
+    # Translate message if option was chosen
+    if translate:
+        message = translate_sentence(message, origin_language, target_language)
+
     # Add message along with extra data to Chats database
     user = session.get('user')
     time_sent = get_current_time()
-    new_message = Chats(message=message, user=user, time_sent=time_sent)
+    new_message = Chats(message=message, user=user, time_sent=time_sent, translate=translate, origin_language=origin_language, target_language=target_language)
     db.session.add(new_message)
     db.session.commit()
 
     # Sends message data to WebSocket in chat.js
-    message_data = {"user": user, "message": message, "time_sent": time_sent}
+    if translate:
+        message_data = {"user": user, "message": message, "timeSent": time_sent, "originLanguage": origin_language}
+    else:
+        message_data = {"user": user, "message": message, "timeSent": time_sent}
     socketio.emit('message', message_data)
 
 
