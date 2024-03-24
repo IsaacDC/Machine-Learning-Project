@@ -6,7 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.on('message', (data) => {
         const messageWindow = document.getElementById('message-window');
         const li = document.createElement('li');
-        li.innerHTML = '(' + data.time_sent + ') ' + '<strong>' + data.user + '</strong>' + ': ' + data.message;
+        if (data.hasOwnProperty('originLanguage')) {
+            li.innerHTML = '(' + data.timeSent + ') ' + '<strong>' + data.user + '</strong>' + ': ' + data.message + '<em>' + ' (Translated from: ' + data.originLanguage + ')' + '</em>';
+        }
+        else {
+            li.innerHTML = '(' + data.timeSent + ') ' + '<strong>' + data.user + '</strong>' + ': ' + data.message;
+        }
         messageWindow.appendChild(li);
 
         // Limits message history to 25 messages by removing top <li> when a new message is added
@@ -21,10 +26,41 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const newMessage = document.getElementById('new-message');
         const message = newMessage.value.trim();
+        const checkbox = document.getElementById('translateCheckbox');
         if (message) {
-            // Message sent to handle_message() in backend
-            socket.emit('message', message);
+            // Create Map with message data
+            const messageData = new Map();
+            if (checkbox.checked) {
+                messageData.set('message', message);
+                messageData.set('originLanguage', document.getElementById('originLanguage').value);
+                messageData.set('targetLanguage', document.getElementById('targetLanguage').value);
+                messageData.set('translate', true);
+            }
+            else {
+                messageData.set('message', message);
+                messageData.set('originLanguage', "None");
+                messageData.set('targetLanguage', "None");
+                messageData.set('translate', false);
+            }
+            // Message data sent to handle_message() in backend
+            const jsonMessageData = JSON.stringify(Object.fromEntries(messageData))
+            socket.emit('message', jsonMessageData);
             newMessage.value = '';
+        }
+    });
+});
+
+// Enables visibily to translation options when selected
+document.addEventListener('DOMContentLoaded', function() {
+    const checkbox = document.getElementById('translateCheckbox');
+    const translationOptions = document.querySelector('.translation-options');
+
+    checkbox.addEventListener('change', function() {
+        if (checkbox.checked) {
+            translationOptions.style.display = 'block';
+        }
+        else {
+            translationOptions.style.display = 'none';
         }
     });
 });
