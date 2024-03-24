@@ -18,14 +18,24 @@
         <thead>
           <tr>
             <th>Id</th>
+            <th>User</th>
             <th>Message</th>
+            <th>Time Sent</th>
+            <th>Translated</th>
+            <th>Origin Language</th>
+            <th>Target Language</th>
           </tr>
         </thead>
         <tbody>
           {% for chat in chat_history %}
           <tr>
             <td>{{ chat.id }}</td>
+            <td>{{ chat.user }}</td>
             <td>{{ chat.message }}</td>
+            <td>{{ chat.time_sent }}</td>
+            <td>{{ chat.translated }}</td>
+            <td>{{ chat.origin_language }}</td>
+            <td>{{ chat.target_language }}</td>
           </tr>
           {% endfor %}
         </tbody>
