@@ -1,1 +1,0 @@
-example_input_str = '<jp> This is just a test nbuig.'
