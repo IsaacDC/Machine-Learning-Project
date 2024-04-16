@@ -2,23 +2,14 @@ from flask import Flask, render_template, session, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 from current_time import get_current_time
-import random
-from testTranslator import (
-    model,
-    encode_input_str,
-    LANG_TOKEN_MAPPING,
-    tokenizer,
-    load_or_train_model,
-)
-import torch
+from translator import translate_sentence
+import random, json
 
 # Assigns Flask application name
 app = Flask(__name__)
 
 model_repo = "google/mt5-small"
 model_path = r"model_checkpoints\model.pt"
-
-load_or_train_model(model_repo, model_path)
 
 
 # Assigns secret key to allow secure communication between site to backend data
@@ -39,8 +30,11 @@ class Chats(db.Model):
     message = db.Column(db.String(250), nullable=False)
     user = db.Column(db.String(25), nullable=False)
     time_sent = db.Column(db.String(7), nullable=False)
+    translate = db.Column(db.Boolean(), nullable=False)
+    origin_language = db.Column(db.String(25), nullable=False)
+    target_language = db.Column(db.String(25), nullable=False)
 
-    # Required, but not necessary.
+    # Required, but not necessary to use.
     # Used for debugging via printing database attributes
     def __repr__(self):
         return ""
@@ -58,38 +52,31 @@ def check_connection():
 
 
 # Websocket functionality when it receives a message
-@socketio.on("message")
-def handle_message(data):
+@socketio.on('message')
+def handle_message(json_message_data):
+    message_data = json.loads(json_message_data)
+    message = message_data['message']
+    origin_language = message_data['originLanguage']
+    target_language = message_data['targetLanguage']
+    translate = message_data['translate']
 
-    message = data["message"]
-    target_lang = data["targetLang"]
+    # Translate message if option was chosen
+    if translate:
+        message = translate_sentence(message, origin_language, target_language)
 
-    print("Input Text:", message)
-    print("Target Language:", target_lang)
-
-    input_ids = encode_input_str(
-        text=message,
-        target_lang=target_lang,
-        tokenizer=tokenizer,
-        seq_len=model.config.max_length,
-        lang_token_map=LANG_TOKEN_MAPPING,
-    )
-    input_ids = input_ids.unsqueeze(0)
-
-    output_tokens = model.generate(input_ids, num_beams=10, num_return_sequence=3)
-
-    for token_set in output_tokens:
-        message = tokenizer.decode(token_set, skip_special_tokens=True)
-
-    user = session.get("user")
+    # Add message along with extra data to Chats database
+    user = session.get('user')
     time_sent = get_current_time()
-    new_message = Chats(message=message, user=user, time_sent=time_sent)
+    new_message = Chats(message=message, user=user, time_sent=time_sent, translate=translate, origin_language=origin_language, target_language=target_language)
     db.session.add(new_message)
     db.session.commit()
 
     # Sends message data to WebSocket in chat.js
-    message_data = {"user": user, "message": message, "time_sent": time_sent}
-    socketio.emit("message", message_data)
+    if translate:
+        message_data = {"user": user, "message": message, "timeSent": time_sent, "originLanguage": origin_language}
+    else:
+        message_data = {"user": user, "message": message, "timeSent": time_sent}
+    socketio.emit('message', message_data)
 
 
 # Main Route ('/') also known as the Home Page

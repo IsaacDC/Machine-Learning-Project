@@ -1,99 +1,88 @@
 /* Reset default browser styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+body, h1, h2, ul, form {
+    margin: 0;
+    padding: 0;
 }
-
+  
 body {
   font-family: Arial, sans-serif;
-  background-color: #f0f0f0;
+  background-color: #f2f2f2;
   padding: 20px;
 }
 
-header {
+header, footer {
   text-align: center;
   margin-bottom: 20px;
 }
 
 h1 {
-  font-size: 24px;
+  color: #333;
+}
+
+main {
+  display: flex;
+  justify-content: center;
 }
 
 .chat_window {
   background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   padding: 20px;
+  width: 80%;
 }
 
-ul {
+h2 {
+  color: #333;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+#message-window {
   list-style-type: none;
   padding: 0;
-  margin: 0;
+  margin-bottom: 20px;
 }
 
-li {
+#message-window li {
   margin-bottom: 10px;
 }
 
-time {
-  font-size: 12px;
-  color: #999;
-  margin-right: 5px;
+#chat-form {
+  display: flex;
+  align-items: center;
 }
 
-strong {
-  font-weight: bold;
+#new-message-label {
+  margin-right: 10px;
 }
 
-form {
-  margin-top: 20px;
-}
-
-label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-input[type="text"],
-select {
-  width: 100%;
-  padding: 8px;
-  border-radius: 4px;
+#new-message {
+  flex: 1;
+  padding: 10px;
   border: 1px solid #ccc;
-  margin-bottom: 10px;
+  border-radius: 5px;
 }
 
-button {
-  padding: 8px 16px;
-  border-radius: 4px;
-  border: none;
+button[type="submit"] {
   background-color: #007bff;
   color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
   cursor: pointer;
 }
 
-button:hover {
+button[type="submit"]:hover {
   background-color: #0056b3;
 }
 
-#error {
+#error-message {
   color: red;
-  font-size: 12px;
+  margin-top: 5px;
+  font-size: 14px;
 }
 
-#translation-output {
-  background-color: #f4f4f4;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  max-width: 100%;
-  overflow-wrap: break-word;
-}
-
-.translate-output{
-  width: 100%;
-  height: 50px;
+.translation-options {
+  display: none;
 }

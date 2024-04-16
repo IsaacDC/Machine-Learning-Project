@@ -15,19 +15,26 @@
       <h1>Welcome <span id="username">{{ user }}</span>!</h1>
     </header>
 
-    <main>
-      <!-- Chat Window -->
-      <section class="chat_window">
-        <h2>Chats</h2>
-        <ul id="message-window" aria-live="polite" aria-atomic="true">
-          {% for chat in latest_chats %}
+  <main>
+    <!-- Chat Window -->
+    <section class="chat_window">
+      <h2>Chats</h2>
+      <ul id="message-window" aria-live="polite" aria-atomic="true">
+        {% for chat in latest_chats %}
+          {% if chat.translate == true %}
           <li>
             <time datetime="{{ chat.time_sent }}">({{ chat.time_sent }})</time>
-            <strong>{{ chat.user }}:</strong> {{ chat.message }}
+            <strong>{{ chat.user }}:</strong> {{ chat.message }} 
+             <em>(Translated from: {{ chat.origin_language }})</em>
           </li>
-          {% endfor %}
-        </ul>
-      </section>
+          {% else %}
+          <li>
+            <time datetime="{{ chat.time_sent }}">({{ chat.time_sent }})</time>
+            <strong>{{ chat.user }}:</strong> {{ chat.message }} 
+          </li>
+          {% endif %}
+        {% endfor %}
+      </ul>
 
       <!--New Message and Send-->
       <form method="post" id="chat-form" aria-labelledby="new-message-label">
@@ -48,7 +55,25 @@
         <button type="submit">Send</button>
         <span id="new-message-error" class="error" aria-live="assertive"></span>
       </form>
-    </main>
+    </section>
+  </main>
+
+  <label for="translateCheckbox">Translate your messages?</label>
+  <input type="checkbox" id="translateCheckbox">
+
+  <div class="translation-options">
+    <h4>Available Translations:</h4>
+
+    <label for="originLanguage">Origin Language: </label>
+    <select id="originLanguage">
+      <option value="english">English</option>
+    </select>
+
+    <label for="targetLanguage">Target Language: </label>
+    <select id="targetLanguage">
+      <option value="japanese">Japanese</option>
+    </select>
+  </div>
 
     <footer>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
