@@ -1,19 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chat App</title>
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="{{ url_for('static', filename='css/home.css') }}"
-    />
-  </head>
-  <body>
-    <header>
-      <h1>Welcome <span id="username">{{ user }}</span>!</h1>
-    </header>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat App</title>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/home.css') }}">
+</head>
+<body>
+  <header>
+    <h1>Welcome <span id="username">{{ user }}</span>!</h1>
+  </header>
 
   <main>
     <!-- Chat Window -->
@@ -36,22 +32,9 @@
         {% endfor %}
       </ul>
 
-      <!--New Message and Send-->
-      <form method="post" id="chat-form" aria-labelledby="new-message-label">
+      <form id="chat-form" aria-labelledby="new-message-label">
         <label for="new-message" id="new-message-label">Message:</label>
-        <input
-          type="text"
-          id="new-message"
-          placeholder="Type your message..."
-          autocomplete="off"
-          aria-required="true"
-          aria-describedby="new-message-error"
-        />
-        <label for="target-lang">Translate to:</label>
-        <select id="target-lang" name="target-lang">
-          <option value="en">English</option>
-          <option value="ja">Japanese</option>
-        </select>
+        <input type="text" id="new-message" autocomplete="off" aria-required="true" aria-describedby="new-message-error">
         <button type="submit">Send</button>
         <span id="new-message-error" class="error" aria-live="assertive"></span>
       </form>
@@ -71,14 +54,17 @@
 
     <label for="targetLanguage">Target Language: </label>
     <select id="targetLanguage">
-      <option value="japanese">Japanese</option>
+      <option value="jap">Japanese</option>
+      <option value="fr">French</option>
+      <option value="de">German</option>
+      <option value="ar">Arabic</option>
+      <option value="zh">Chinese</option>
     </select>
   </div>
 
-    <footer>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
-      <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
-      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    </footer>
-  </body>
+  <footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+  </footer>
+</body>
 </html>

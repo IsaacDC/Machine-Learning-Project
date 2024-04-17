@@ -4,13 +4,13 @@ from flask_socketio import SocketIO
 from current_time import get_current_time
 from translator import translate_sentence
 import random, json
+from transformers import pipeline
 
 # Assigns Flask application name
 app = Flask(__name__)
 
-model_repo = "google/mt5-small"
-model_path = r"model_checkpoints\model.pt"
-
+# model_repo = "google/mt5-small"
+# model_path = r"model_checkpoints\model.pt"
 
 # Assigns secret key to allow secure communication between site to backend data
 app.config["SECRET_KEY"] = "9y2g9t1H8x3PT7Ej8UC92VsU"
@@ -21,6 +21,15 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///chats.db"
 db = SQLAlchemy(app)
 # Creates WebSocket using SocketIO
 socketio = SocketIO(app)
+
+
+def translate_to_target_language(from_text, target_language):
+    translation_pipeline = pipeline(
+        f"translation_en_to_{target_language}",
+        model=f"Helsinki-NLP/opus-mt-en-{target_language}",
+    )
+    results = translation_pipeline(from_text)
+    return results
 
 
 # Database creation
@@ -52,31 +61,45 @@ def check_connection():
 
 
 # Websocket functionality when it receives a message
-@socketio.on('message')
+@socketio.on("message")
 def handle_message(json_message_data):
     message_data = json.loads(json_message_data)
-    message = message_data['message']
-    origin_language = message_data['originLanguage']
-    target_language = message_data['targetLanguage']
-    translate = message_data['translate']
+    message = message_data["message"]
+    origin_language = message_data["originLanguage"]
+    target_language = message_data["targetLanguage"]
+    translate = message_data["translate"]
 
     # Translate message if option was chosen
     if translate:
-        message = translate_sentence(message, origin_language, target_language)
+        # message = translate_sentence(message, origin_language, target_language)
+        message = translate_to_target_language(message, target_language)
+        translated_text = message[0]["translation_text"]
 
     # Add message along with extra data to Chats database
-    user = session.get('user')
+    user = session.get("user")
     time_sent = get_current_time()
-    new_message = Chats(message=message, user=user, time_sent=time_sent, translate=translate, origin_language=origin_language, target_language=target_language)
+    new_message = Chats(
+        message=translated_text,
+        user=user,
+        time_sent=time_sent,
+        translate=translate,
+        origin_language=origin_language,
+        target_language=target_language,
+    )
     db.session.add(new_message)
     db.session.commit()
 
     # Sends message data to WebSocket in chat.js
     if translate:
-        message_data = {"user": user, "message": message, "timeSent": time_sent, "originLanguage": origin_language}
+        message_data = {
+            "user": user,
+            "message": message,
+            "timeSent": time_sent,
+            "originLanguage": origin_language,
+        }
     else:
         message_data = {"user": user, "message": message, "timeSent": time_sent}
-    socketio.emit('message', message_data)
+    socketio.emit("message", message_data)
 
 
 # Main Route ('/') also known as the Home Page
@@ -101,38 +124,6 @@ def chat_history():
     chat_history = Chats.query.all()
     # Load 'chatHistory,html' with access to chat_history
     return render_template("chatHistory.html", chat_history=chat_history)
-
-
-# @app.route("/", methods=["POST"])
-# def translate():
-#     if request.method == "POST":
-#         try:
-#             input_text = request.form["input_text"]
-#             target_lang = request.form["target-lang"]
-
-#             print("Input Text:", input_text)
-#             print("Target Language:", target_lang)
-
-#             input_ids = encode_input_str(
-#                 text=input_text,
-#                 target_lang=target_lang,
-#                 tokenizer=tokenizer,
-#                 seq_len=model.config.max_length,
-#                 lang_token_map=LANG_TOKEN_MAPPING,
-#             )
-#             input_ids = input_ids.unsqueeze(0)
-
-#             output_tokens = model.generate(
-#                 input_ids, num_beams=10, num_return_sequence=3
-#             )
-
-#             for token_set in output_tokens:
-#                 output = tokenizer.decode(token_set, skip_special_tokens=True)
-#             return render_template("home.html", output=output)
-
-#         except Exception as e:
-#             error_message = str(e)
-#             return render_template("home.html", error=error_message)
 
 
 # Runs a local server with WebSocket support
