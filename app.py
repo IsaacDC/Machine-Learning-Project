@@ -1,35 +1,22 @@
-from flask import Flask, render_template, session, request, jsonify
+from flask import Flask, render_template, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 from current_time import get_current_time
 from translator import translate_sentence
 import random, json
-from transformers import pipeline
 
 # Assigns Flask application name
 app = Flask(__name__)
 
-# model_repo = "google/mt5-small"
-# model_path = r"model_checkpoints\model.pt"
-
 # Assigns secret key to allow secure communication between site to backend data
-app.config["SECRET_KEY"] = "9y2g9t1H8x3PT7Ej8UC92VsU"
+app.config['SECRET_KEY'] = '9y2g9t1H8x3PT7Ej8UC92VsU'
 # Assigns name of SQLite database
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///chats.db"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chats.db'
 
 # Creates database object using SQLAlchemy
 db = SQLAlchemy(app)
 # Creates WebSocket using SocketIO
 socketio = SocketIO(app)
-
-
-def translate_to_target_language(from_text, target_language):
-    translation_pipeline = pipeline(
-        f"translation_en_to_{target_language}",
-        model=f"Helsinki-NLP/opus-mt-en-{target_language}",
-    )
-    results = translation_pipeline(from_text)
-    return results
 
 
 # Database creation
@@ -48,67 +35,52 @@ class Chats(db.Model):
     def __repr__(self):
         return ""
 
-
 with app.app_context():
     db.create_all()
 
 
 # Used for logging purposes
 # Prints a confirmation that WebSocket is functioning
-@socketio.on("connect")
+@socketio.on('connect')
 def check_connection():
     print("WebSocket connected successfully.")
 
 
 # Websocket functionality when it receives a message
-@socketio.on("message")
+@socketio.on('message')
 def handle_message(json_message_data):
     message_data = json.loads(json_message_data)
-    message = message_data["message"]
-    origin_language = message_data["originLanguage"]
-    target_language = message_data["targetLanguage"]
-    translate = message_data["translate"]
+    message = message_data['message']
+    origin_language = message_data['originLanguage']
+    target_language = message_data['targetLanguage']
+    translate = message_data['translate']
 
     # Translate message if option was chosen
     if translate:
-        # message = translate_sentence(message, origin_language, target_language)
-        message = translate_to_target_language(message, target_language)
-        translated_text = message[0]["translation_text"]
+        message = translate_sentence(message, origin_language, target_language)
 
     # Add message along with extra data to Chats database
-    user = session.get("user")
+    user = session.get('user')
     time_sent = get_current_time()
-    new_message = Chats(
-        message=translated_text,
-        user=user,
-        time_sent=time_sent,
-        translate=translate,
-        origin_language=origin_language,
-        target_language=target_language,
-    )
+    new_message = Chats(message=message, user=user, time_sent=time_sent, translate=translate, origin_language=origin_language, target_language=target_language)
     db.session.add(new_message)
     db.session.commit()
 
     # Sends message data to WebSocket in chat.js
     if translate:
-        message_data = {
-            "user": user,
-            "message": message,
-            "timeSent": time_sent,
-            "originLanguage": origin_language,
-        }
+        message_data = {"user": user, "message": message, "timeSent": time_sent, "originLanguage": origin_language}
     else:
         message_data = {"user": user, "message": message, "timeSent": time_sent}
-    socketio.emit("message", message_data)
+    socketio.emit('message', message_data)
 
 
 # Main Route ('/') also known as the Home Page
 # Has access to POST and GET data to and from the backend
-@app.route("/", methods=["POST", "GET"])
+@app.route("/", methods=['POST', 'GET'])
 def home_page():
     # Create a random username and place in session for easy access later on
-    session["user"] = "User" + str(random.randint(100, 999))
-    user = session.get("user")
+    session['user'] = "User" + str(random.randint(100, 999))
+    user = session.get('user')
     # Retrieve the latest 25 chats from Chats database (By sorting through highest Id)
     latest_chats = db.session.query(Chats).order_by(Chats.id.desc()).limit(25).all()
     latest_chats.reverse()
@@ -118,7 +90,7 @@ def home_page():
 
 # Chat History *TESTING PURPOSES*
 # Has access to GET data from the backend
-@app.route("/chat-history", methods=["GET"])
+@app.route("/chat-history", methods=['GET'])
 def chat_history():
     # Get all Chats database data into a single variable
     chat_history = Chats.query.all()
@@ -127,5 +99,5 @@ def chat_history():
 
 
 # Runs a local server with WebSocket support
-if __name__ == "__main__":
+if __name__ == '__main__':
     socketio.run(app)
